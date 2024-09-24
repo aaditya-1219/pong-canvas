@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import Score from '../components/Score';
 
 const Canvas = () => {
   const canvasRef = useRef(null);
@@ -9,11 +10,16 @@ const Canvas = () => {
   const paddleSpeed = 8; // Movement paddleSpeed size
   const pongSpeed = 3;
   const initialY = window.innerHeight/2 - (paddleHeight/2)
-  const [self, setSelf] = useState({ x: paddleOffset, y: initialY }); 
-  const [opp, setOpp] = useState({ x: window.innerWidth - paddleOffset - paddleWidth, y: initialY }); 
-  const [pong, setPong] = useState({x: window.innerWidth/2 - (pongSize/2), y: window.innerHeight/2 - (pongSize/2)})
-  const [direction, setDirection] = useState({x: 1, y: 0})
+  const initSelf = { x: paddleOffset, y: initialY }
+  const initOpp = { x: window.innerWidth - paddleOffset - paddleWidth, y: initialY }
+  const initPong = {x: window.innerWidth/2 - (pongSize/2), y: window.innerHeight/2 - (pongSize/2)}
+  const [self, setSelf] = useState(initSelf); 
+  const [opp, setOpp] = useState(initOpp); 
+  const [pong, setPong] = useState(initPong)
+  const [direction, setDirection] = useState({x: -1, y: 1})
   const [gameRunning, setGameRunning] = useState(true)
+  const [selfScore, setSelfScore] = useState(0)
+  const [oppScore, setOppScore] = useState(0)
 
   const [keysPressed, setKeysPressed] = useState({});
 
@@ -79,21 +85,29 @@ const Canvas = () => {
     if(pongTop <= 0 || pongBottom >= window.innerHeight){
       setDirection(prev => ({...prev, y: prev.y * -1}))
     }
+
     const gameOver = () => {
-      if(pongLeft <= 0) console.log("Right scored")
-      if(pongRight >= window.innerWidth) console.log("Left scored")
-      return (pongLeft <= 0 || pongRight >= window.innerWidth)
+      if(pongRight <= paddleWidth) setOppScore(prev => prev+1);
+      if(pongLeft >= window.innerWidth - paddleWidth) setSelfScore(prev => prev+1)
+      return (pongRight <= paddleWidth || pongLeft >= window.innerWidth - paddleWidth)
     }
 
-    if(gameOver()) setGameRunning(false)
+    if(gameOver()) {
+      setSelf(initSelf)
+      setOpp(initOpp)
+      setPong(initPong)
+      setDirection({x: 0, y: 0})
+      // Freeze pong for some time before next round
+      setTimeout(() => {
+        setDirection({x: -1, y: 1})
+      }, 1500);
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous frame
     drawImage(ctx, paddleSprite, self.x, self.y, paddleWidth, paddleHeight); // Self paddle
     drawImage(ctx, paddleSprite, opp.x, opp.y, paddleWidth, paddleHeight); // Opponent paddle
     drawImage(ctx, pongSprite, pong.x, pong.y, pongSize, pongSize); // Pong
   }, [self, opp, pong]);
-
-
 
   // key down
   const handleKeyDown = (event) => {
@@ -152,7 +166,10 @@ const Canvas = () => {
   }, [keysPressed, direction, gameRunning]);
 
   return (
-    <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth}/>
+    <div>
+      <Score leftScore={selfScore} rightScore={oppScore} />
+      <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth} />
+    </div>
   );
 };
 

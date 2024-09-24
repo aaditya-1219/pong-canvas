@@ -4,6 +4,20 @@
     overflow: hidden;
 }
 
+.text-white {
+    color: white;
+}
+
+#score {
+    position: absolute;
+    bottom: 700px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-evenly;
+    font-size: 5rem;
+}
+
 h1 {
     color: white;
 }
